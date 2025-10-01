@@ -44,20 +44,76 @@ def load_model():
 model, encoders, metadata, scaler = load_model()
 
 # ============================================
-# INTERFAZ
+# HEADER CON LOGO
 # ============================================
 
-st.title("🚢 Predictor de Supervivencia Titanic")
-st.markdown("Ingresa los datos del pasajero para predecir si sobreviviría")
+col_logo, col_title = st.columns([1, 3])
 
-# Información del modelo en sidebar
+with col_logo:
+    st.image(
+        "https://uev.uadeo.mx/pluginfile.php/1/theme_adaptable/logo/1745964853/logoBlanco.png",
+        width=120
+    )
+
+with col_title:
+    st.title("🚢 Predictor de Supervivencia Titanic")
+    st.markdown("Ingresa los datos del pasajero para predecir si sobreviviría")
+
+st.divider()
+
+# ============================================
+# SIDEBAR
+# ============================================
+
 with st.sidebar:
-    st.header("📊 Modelo")
-    st.metric("Tipo", metadata['model_name'])
+    st.header("📊 Información del Modelo")
+    
+    # Métricas del modelo
+    st.metric("Algoritmo", metadata['model_name'])
     st.metric("Precisión", f"{metadata['accuracy']:.1%}")
+    st.metric("ROC-AUC", f"{metadata['roc_auc']:.3f}")
+    
+    st.divider()
+    
+    # Descripción del modelo
+    st.subheader("📝 Descripción")
+    st.markdown("""
+    Este modelo utiliza **Machine Learning** para predecir la probabilidad 
+    de supervivencia de pasajeros del Titanic basándose en características 
+    demográficas y sociales.
+    
+    **Variables consideradas:**
+    - Clase del ticket (1ª, 2ª, 3ª)
+    - Sexo y edad del pasajero
+    - Composición familiar a bordo
+    - Tamaño de la familia
+    """)
+    
+    st.divider()
+    
+    # Créditos institucionales
+    st.subheader("🎓 Créditos")
+    st.markdown("""
+    **Universidad Autónoma de Occidente**
+    
+    **Alumno:**  
+    Psi. Andrés Cruz Degante
+    
+    **Profesora:**  
+    Dra. Alma Montserrat Romero Serrano
+    
+    **Materia:**  
+    Estadística Aplicada a la Toma de Decisiones
+    """)
+    
+    st.divider()
+    st.caption("Octubre 2025 • UADEO")
 
-# Formulario
-st.subheader("Datos del Pasajero")
+# ============================================
+# FORMULARIO
+# ============================================
+
+st.subheader("📝 Datos del Pasajero")
 
 col1, col2 = st.columns(2)
 
@@ -97,7 +153,7 @@ else:
 # PREDICCIÓN
 # ============================================
 
-if st.button("🔮 Predecir", type="primary", use_container_width=True):
+if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=True):
     
     # Preparar datos
     input_data = pd.DataFrame({
@@ -125,20 +181,42 @@ if st.button("🔮 Predecir", type="primary", use_container_width=True):
     
     # Mostrar resultado
     st.divider()
+    st.subheader("📊 Resultados de la Predicción")
     
     if prediction == 1:
-        st.success("### ✅ SOBREVIVE")
+        st.success("### ✅ EL PASAJERO SOBREVIVE")
     else:
-        st.error("### ❌ NO SOBREVIVE")
+        st.error("### ❌ EL PASAJERO NO SOBREVIVE")
     
     # Probabilidades
     col_a, col_b = st.columns(2)
-    col_a.metric("💀 Muerte", f"{probability[0]:.0%}")
-    col_b.metric("💚 Supervivencia", f"{probability[1]:.0%}")
+    with col_a:
+        st.metric("💀 Probabilidad de Muerte", f"{probability[0]:.1%}")
+    with col_b:
+        st.metric("💚 Probabilidad de Supervivencia", f"{probability[1]:.1%}")
     
-    # Gráfica
-    st.progress(probability[1], text=f"Probabilidad de supervivencia: {probability[1]:.1%}")
+    # Barra de progreso
+    st.markdown("#### Confianza del Modelo")
+    st.progress(probability[1], text=f"Supervivencia: {probability[1]:.1%}")
+    
+    # Interpretación
+    st.divider()
+    st.markdown("##### 💡 Interpretación")
+    if probability[1] > 0.7:
+        st.info("Alta probabilidad de supervivencia. Factores como clase alta, sexo femenino y familia pequeña favorecen la supervivencia.")
+    elif probability[1] > 0.4:
+        st.warning("Probabilidad moderada. Los factores están balanceados.")
+    else:
+        st.error("Baja probabilidad de supervivencia. Factores como clase baja, sexo masculino y familia grande reducen las posibilidades.")
 
-# Footer
+# ============================================
+# FOOTER
+# ============================================
+
 st.divider()
-st.caption("Desarrollado con Streamlit • Dataset: Titanic ML")
+st.markdown("""
+<div style='text-align: center; color: #666;'>
+    <p><strong>Dataset:</strong> Titanic - Machine Learning from Disaster (Kaggle)</p>
+    <p>Desarrollado con 💙 usando Streamlit y scikit-learn</p>
+</div>
+""", unsafe_allow_html=True)
