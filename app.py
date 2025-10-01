@@ -43,8 +43,9 @@ model, encoders, metadata, scaler = load_model()
 st.markdown(
     """
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
-        <img src="https://uev.uadeo.mx/pluginfile.php/1/theme_adaptable/logo/1745964853/logoBlanco.png" width="300" style="margin-bottom: 10px;"/>
-        <h1 style="font-size: 2.5em; font-weight: bold; margin-bottom: 0;">🚢 Predictor de Supervivencia Titanic</h1>
+        <img src="https://uadeo.mx/wp-content/uploads/2020/09/logo-UAdeO-Web-R.svg" width="300" style="margin-bottom: 10px;"/>
+        <h1 style="font-size: 2.5em; font-weight: bold; margin-bottom: 0;">Modelo de Red Neuronal</h1>
+        <h2 style="font-size: 2.5em; font-weight: ligth; margin-bottom: 0;">Predictor de Supervivencia Titanic</h2>
         <br>
         <p style="font-size: 1.1em; margin-bottom: 0;">Ingresa los datos del pasajero para predecir si sobreviviría</p>
     </div>
