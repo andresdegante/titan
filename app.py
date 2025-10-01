@@ -128,7 +128,6 @@ if st.button("🔮 Predecir", type="primary", use_container_width=True):
     
     if prediction == 1:
         st.success("### ✅ SOBREVIVE")
-        st.balloons()
     else:
         st.error("### ❌ NO SOBREVIVE")
     
