@@ -29,14 +29,10 @@ def load_model():
         model = joblib.load(BytesIO(requests.get(base_url + 'titanic_model.pkl').content))
         encoders = joblib.load(BytesIO(requests.get(base_url + 'label_encoders.pkl').content))
         metadata = joblib.load(BytesIO(requests.get(base_url + 'model_metadata.pkl').content))
-        
-        # Cargar scaler si existe
         scaler = None
         if metadata.get('use_scaler', False):
             scaler = joblib.load(BytesIO(requests.get(base_url + 'scaler.pkl').content))
-        
         return model, encoders, metadata, scaler
-    
     except Exception as e:
         st.error(f"Error al cargar modelo: {str(e)}")
         st.stop()
@@ -44,74 +40,31 @@ def load_model():
 model, encoders, metadata, scaler = load_model()
 
 # ============================================
-# HEADER CON LOGO
+# HEADER CON LOGO GRANDE Y TÍTULO CENTRADO
 # ============================================
 
-col_logo, col_title = st.columns([1, 3])
-
-with col_logo:
-    st.image(
-        "https://uev.uadeo.mx/pluginfile.php/1/theme_adaptable/logo/1745964853/logoBlanco.png",
-        width=120
-    )
-
-with col_title:
-    st.title("🚢 Predictor de Supervivencia Titanic")
-    st.markdown("Ingresa los datos del pasajero para predecir si sobreviviría")
-
-st.divider()
+st.markdown(
+    """
+    <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
+        <img src="https://uev.uadeo.mx/pluginfile.php/1/theme_adaptable/logo/1745964853/logoBlanco.png" width="300" style="margin-bottom: 10px;"/>
+        <h1 style="font-size: 2.5em; font-weight: bold; margin-bottom: 0;">🚢 Predictor de Supervivencia Titanic</h1>
+        <p style="font-size: 1.1em; margin-bottom: 0;">Ingresa los datos del pasajero para predecir si sobreviviría</p>
+    </div>
+    <hr style='margin-top: 1em; margin-bottom: 1em;'>
+    """,
+    unsafe_allow_html=True
+)
 
 # ============================================
-# SIDEBAR
+# FORMULARIO EN EL CENTRO
 # ============================================
 
-with st.sidebar:
-    st.header("📊 Información del Modelo")
-    
-    # Métricas del modelo
-    st.metric("Algoritmo", metadata['model_name'])
-    st.metric("Precisión", f"{metadata['accuracy']:.1%}")
-    st.metric("ROC-AUC", f"{metadata['roc_auc']:.3f}")
-    
-    st.divider()
-    
-    # Descripción del modelo
-    st.subheader("📝 Descripción")
-    st.markdown("""
-    Este modelo utiliza **Machine Learning** para predecir la probabilidad 
-    de supervivencia de pasajeros del Titanic basándose en características 
-    demográficas y sociales.
-    
-    **Variables consideradas:**
-    - Clase del ticket (1ª, 2ª, 3ª)
-    - Sexo y edad del pasajero
-    - Composición familiar a bordo
-    - Tamaño de la familia
-    """)
-    
-    st.divider()
-    
-    # Créditos institucionales
-    st.subheader("🎓 Créditos")
-    st.markdown("""
-    **Universidad Autónoma de Occidente**
-    
-    **Alumno:**  
-    Psi. Andrés Cruz Degante
-    
-    **Profesora:**  
-    Dra. Alma Montserrat Romero Serrano
-    
-    **Materia:**  
-    Estadística Aplicada a la Toma de Decisiones
-    """)
-    
-    st.divider()
-    st.caption("Octubre 2025 • UADEO")
-
-# ============================================
-# FORMULARIO
-# ============================================
+st.markdown(
+    """
+    <div style="display: flex; flex-direction: column; align-items: center;">
+    """,
+    unsafe_allow_html=True
+)
 
 st.subheader("📝 Datos del Pasajero")
 
@@ -149,13 +102,13 @@ elif age < 60:
 else:
     age_group = 'Senior'
 
+st.markdown("</div>", unsafe_allow_html=True)  # Cerrar centro
+
 # ============================================
 # PREDICCIÓN
 # ============================================
 
 if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=True):
-    
-    # Preparar datos
     input_data = pd.DataFrame({
         'Pclass': [pclass],
         'Sex': [sex],
@@ -166,40 +119,26 @@ if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=
         'FamilyType': [family_type],
         'AgeGroup': [age_group]
     })
-    
-    # Codificar
     input_data['Sex'] = encoders['Sex'].transform(input_data['Sex'])
     input_data['FamilyType'] = encoders['FamilyType'].transform(input_data['FamilyType'])
     input_data['AgeGroup'] = encoders['AgeGroup'].transform(input_data['AgeGroup'])
-    
-    # Predecir
     if scaler:
         input_data = scaler.transform(input_data)
-    
     prediction = model.predict(input_data)[0]
     probability = model.predict_proba(input_data)[0]
-    
-    # Mostrar resultado
     st.divider()
     st.subheader("📊 Resultados de la Predicción")
-    
     if prediction == 1:
         st.success("### ✅ EL PASAJERO SOBREVIVE")
     else:
         st.error("### ❌ EL PASAJERO NO SOBREVIVE")
-    
-    # Probabilidades
     col_a, col_b = st.columns(2)
     with col_a:
         st.metric("💀 Probabilidad de Muerte", f"{probability[0]:.1%}")
     with col_b:
         st.metric("💚 Probabilidad de Supervivencia", f"{probability[1]:.1%}")
-    
-    # Barra de progreso
     st.markdown("#### Confianza del Modelo")
     st.progress(probability[1], text=f"Supervivencia: {probability[1]:.1%}")
-    
-    # Interpretación
     st.divider()
     st.markdown("##### 💡 Interpretación")
     if probability[1] > 0.7:
@@ -210,13 +149,36 @@ if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=
         st.error("Baja probabilidad de supervivencia. Factores como clase baja, sexo masculino y familia grande reducen las posibilidades.")
 
 # ============================================
-# FOOTER
+# MÉTRICAS DEL MODELO (PEQUEÑAS, INFERIOR)
 # ============================================
 
 st.divider()
-st.markdown("""
-<div style='text-align: center; color: #666;'>
-    <p><strong>Dataset:</strong> Titanic - Machine Learning from Disaster (Kaggle)</p>
-    <p>Desarrollado con 💙 usando Streamlit y scikit-learn</p>
-</div>
-""", unsafe_allow_html=True)
+st.markdown(
+    f"""
+    <div style='text-align: center; font-size: 0.8em; color: #aaa; margin-bottom: 0.8em;'>
+        <b>Algoritmo:</b> {metadata['model_name']} &nbsp;|&nbsp;
+        <b>Precisión:</b> {metadata['accuracy']:.1%} &nbsp;|&nbsp;
+        <b>ROC-AUC:</b> {metadata['roc_auc']:.3f}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
+
+# ============================================
+# CRÉDITOS Y DESCRIPCIÓN (CENTRADOS, INFERIOR)
+# ============================================
+
+st.markdown(
+    """
+    <div style='text-align: center; margin-top: 0.5em; font-size: 1em;'>
+        <hr style='margin-bottom: 0.5em;'>
+        <span style='font-size:1.2em; font-weight: bold;'>Universidad Autónoma de Occidente</span><br>
+        <b>Alumno:</b> Psi. Andrés Cruz Degante<br>
+        <b>Profesora:</b> Dra. Alma Montserrat Romero Serrano<br>
+        <b>Materia:</b> Estadística Aplicada a la Toma de Decisiones<br>
+        <br>
+        <span style='font-size: 0.85em; color: #aaa;'>Desarrollado con Streamlit • Dataset: Titanic - Machine Learning from Disaster (Kaggle)</span>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
