@@ -54,3 +54,27 @@ The **best model** and preprocessing objects are exported and served via a **Str
 ## Quick Start
 
 1. **Clone the repository**
+2. **Install dependencies**
+3. **Launch the Streamlit app**
+4. **Open the browser** to the provided local URL and interact with the predictor.
+
+---
+
+## Notes
+
+- **Training notebook**: The model was trained and evaluated in a Google Colab environment. See the Jupyter notebook for full details.
+- **Deployment**: The web app is also hosted on Streamlit Cloud for public access.
+- **Limitations**: Performance depends on the quality and representativeness of the input data. Results are illustrative and not suitable for real-life risk assessment.
+- **Extensions**: This setup can be adapted for other classification problems by changing the dataset and features.
+
+---
+
+## Acknowledgements
+
+Dataset sourced and adapted from Kaggle.
+
+---
+
+**Contributions and feedback are welcome!**
+Andres Cruz Degante
+
