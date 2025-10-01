@@ -4,6 +4,7 @@ import numpy as np
 import joblib
 import requests
 from io import BytesIO
+import time
 
 # ============================================
 # CONFIGURACIÓN DE LA APP
@@ -16,47 +17,52 @@ st.set_page_config(
 )
 
 # ============================================
-# CARGAR MODELO DESDE GITHUB
+# CARGAR MODELO DESDE GITHUB CON RETRY
 # ============================================
 
-@st.cache_resource
-def load_model_from_github(repo_url):
+@st.cache_resource(show_spinner=False)
+def load_model_from_github(repo_url, max_retries=3):
     """
-    Carga el modelo y archivos auxiliares desde GitHub
-    repo_url debe ser la URL raw de los archivos .pkl
-    Ejemplo: 'https://raw.githubusercontent.com/tu-usuario/tu-repo/main/'
+    Carga el modelo con reintentos automáticos
     """
-    try:
-        # Cargar modelo
-        model_url = repo_url + 'titanic_model.pkl'
-        response = requests.get(model_url)
-        model = joblib.load(BytesIO(response.content))
-        
-        # Cargar encoders
-        encoders_url = repo_url + 'label_encoders.pkl'
-        response = requests.get(encoders_url)
-        label_encoders = joblib.load(BytesIO(response.content))
-        
-        # Cargar metadata
-        metadata_url = repo_url + 'model_metadata.pkl'
-        response = requests.get(metadata_url)
-        metadata = joblib.load(BytesIO(response.content))
-        
-        # Cargar scaler si es necesario
-        scaler = None
-        if metadata.get('use_scaler', False):
-            scaler_url = repo_url + 'scaler.pkl'
-            response = requests.get(scaler_url)
-            scaler = joblib.load(BytesIO(response.content))
-        
-        return model, label_encoders, metadata, scaler
-    except Exception as e:
-        st.error(f"Error al cargar el modelo: {e}")
-        return None, None, None, None
+    for attempt in range(max_retries):
+        try:
+            with st.spinner(f'Cargando modelo... (Intento {attempt + 1}/{max_retries})'):
+                # Cargar modelo
+                model_response = requests.get(repo_url + 'titanic_model.pkl', timeout=30)
+                model_response.raise_for_status()
+                model = joblib.load(BytesIO(model_response.content))
+                
+                # Cargar encoders
+                encoders_response = requests.get(repo_url + 'label_encoders.pkl', timeout=30)
+                encoders_response.raise_for_status()
+                label_encoders = joblib.load(BytesIO(encoders_response.content))
+                
+                # Cargar metadata
+                metadata_response = requests.get(repo_url + 'model_metadata.pkl', timeout=30)
+                metadata_response.raise_for_status()
+                metadata = joblib.load(BytesIO(metadata_response.content))
+                
+                # Cargar scaler si es necesario
+                scaler = None
+                if metadata.get('use_scaler', False):
+                    scaler_response = requests.get(repo_url + 'scaler.pkl', timeout=30)
+                    scaler_response.raise_for_status()
+                    scaler = joblib.load(BytesIO(scaler_response.content))
+                
+                return model, label_encoders, metadata, scaler
+                
+        except Exception as e:
+            if attempt == max_retries - 1:
+                st.error(f"❌ Error al cargar el modelo: {str(e)}")
+                st.info("Verifica que la URL del repositorio sea correcta y los archivos .pkl estén en la rama 'main'")
+                return None, None, None, None
+            time.sleep(2)
 
-# URL de tu repositorio (CAMBIA ESTO)
+# ⚠️ CAMBIA ESTA URL POR LA DE TU REPOSITORIO
 GITHUB_REPO_URL = 'https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/'
 
+# Cargar modelo
 model, label_encoders, metadata, scaler = load_model_from_github(GITHUB_REPO_URL)
 
 # ============================================
@@ -68,6 +74,8 @@ st.markdown("---")
 
 if model is None:
     st.error("⚠️ No se pudo cargar el modelo. Verifica la URL del repositorio.")
+    st.code(f"URL actual: {GITHUB_REPO_URL}")
+    st.info("La URL debe apuntar a: https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/")
     st.stop()
 
 # Mostrar información del modelo
@@ -135,43 +143,47 @@ if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=
     })
     
     # Codificar variables categóricas
-    input_data['Sex'] = label_encoders['Sex'].transform(input_data['Sex'])
-    input_data['FamilyType'] = label_encoders['FamilyType'].transform(input_data['FamilyType'])
-    input_data['AgeGroup'] = label_encoders['AgeGroup'].transform(input_data['AgeGroup'])
-    
-    # Escalar si es necesario
-    if scaler is not None:
-        input_scaled = scaler.transform(input_data)
-        prediction = model.predict(input_scaled)[0]
-        probability = model.predict_proba(input_scaled)[0]
-    else:
-        prediction = model.predict(input_data)[0]
-        probability = model.predict_proba(input_data)[0]
-    
-    # Mostrar resultados
-    st.markdown("---")
-    st.header("📊 Resultados de la Predicción")
-    
-    col_result1, col_result2 = st.columns(2)
-    
-    with col_result1:
-        if prediction == 1:
-            st.success("### ✅ SOBREVIVE")
-            st.balloons()
+    try:
+        input_data['Sex'] = label_encoders['Sex'].transform(input_data['Sex'])
+        input_data['FamilyType'] = label_encoders['FamilyType'].transform(input_data['FamilyType'])
+        input_data['AgeGroup'] = label_encoders['AgeGroup'].transform(input_data['AgeGroup'])
+        
+        # Escalar si es necesario
+        if scaler is not None:
+            input_scaled = scaler.transform(input_data)
+            prediction = model.predict(input_scaled)[0]
+            probability = model.predict_proba(input_scaled)[0]
         else:
-            st.error("### ❌ NO SOBREVIVE")
-    
-    with col_result2:
-        st.metric("Probabilidad de Supervivencia", f"{probability[1]:.2%}")
-        st.metric("Probabilidad de Muerte", f"{probability[0]:.2%}")
-    
-    # Barra de probabilidad
-    st.markdown("### Distribución de Probabilidad")
-    prob_df = pd.DataFrame({
-        'Resultado': ['Muere', 'Sobrevive'],
-        'Probabilidad': [probability[0], probability[1]]
-    })
-    st.bar_chart(prob_df.set_index('Resultado'))
+            prediction = model.predict(input_data)[0]
+            probability = model.predict_proba(input_data)[0]
+        
+        # Mostrar resultados
+        st.markdown("---")
+        st.header("📊 Resultados de la Predicción")
+        
+        col_result1, col_result2 = st.columns(2)
+        
+        with col_result1:
+            if prediction == 1:
+                st.success("### ✅ SOBREVIVE")
+                st.balloons()
+            else:
+                st.error("### ❌ NO SOBREVIVE")
+        
+        with col_result2:
+            st.metric("Probabilidad de Supervivencia", f"{probability[1]:.2%}")
+            st.metric("Probabilidad de Muerte", f"{probability[0]:.2%}")
+        
+        # Barra de probabilidad
+        st.markdown("### Distribución de Probabilidad")
+        prob_df = pd.DataFrame({
+            'Resultado': ['Muere', 'Sobrevive'],
+            'Probabilidad': [probability[0], probability[1]]
+        })
+        st.bar_chart(prob_df.set_index('Resultado'))
+        
+    except Exception as e:
+        st.error(f"Error durante la predicción: {str(e)}")
 
 # ============================================
 # FOOTER
