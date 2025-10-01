@@ -12,7 +12,7 @@ from io import BytesIO
 st.set_page_config(
     page_title="Predictor Titanic",
     page_icon="🚢",
-    layout="centered"
+    layout="wide"  # Cambié a 'wide' para mejor uso del espacio horizontal
 )
 
 # ============================================
@@ -21,11 +21,8 @@ st.set_page_config(
 
 @st.cache_resource(show_spinner=True)
 def load_model():
-    """Carga modelo desde GitHub"""
     base_url = 'https://raw.githubusercontent.com/andresdegante/titan/main/'
-    
     try:
-        # Cargar archivos
         model = joblib.load(BytesIO(requests.get(base_url + 'titanic_model.pkl').content))
         encoders = joblib.load(BytesIO(requests.get(base_url + 'label_encoders.pkl').content))
         metadata = joblib.load(BytesIO(requests.get(base_url + 'model_metadata.pkl').content))
@@ -56,39 +53,23 @@ st.markdown(
 )
 
 # ============================================
-# FORMULARIO EN EL CENTRO
+# FORMULARIO Y RESULTADOS EN DOS COLUMNAS
 # ============================================
 
-st.markdown(
-    """
-    <div style="display: flex; flex-direction: column; align-items: center;">
-    """,
-    unsafe_allow_html=True
-)
+left_col, right_col = st.columns([1, 1])
 
-st.subheader("📝 Datos del Pasajero")
-
-col1, col2 = st.columns(2)
-
-with col1:
+with left_col:
+    st.subheader("📝 Datos del Pasajero")
     pclass = st.selectbox("🎫 Clase", [1, 2, 3], index=2, help="1=Primera, 2=Segunda, 3=Tercera")
     sex = st.radio("👤 Sexo", ['male', 'female'], horizontal=True)
     age = st.slider("🎂 Edad", 0, 80, 30)
-
-with col2:
     sibsp = st.number_input("👫 Hermanos/Cónyuges", 0, 8, 0)
     parch = st.number_input("👨‍👩‍👧 Padres/Hijos", 0, 6, 0)
     family_size = sibsp + parch + 1
     st.metric("👨‍👩‍👧‍👦 Tamaño Familia", family_size)
 
 # Calcular categorías automáticamente
-if family_size == 1:
-    family_type = 'Alone'
-elif family_size <= 4:
-    family_type = 'Medium'
-else:
-    family_type = 'Large'
-
+family_type = 'Alone' if family_size == 1 else 'Medium' if family_size <= 4 else 'Large'
 if age < 2:
     age_group = 'Infant'
 elif age < 12:
@@ -102,51 +83,51 @@ elif age < 60:
 else:
     age_group = 'Senior'
 
-st.markdown("</div>", unsafe_allow_html=True)  # Cerrar centro
-
-# ============================================
-# PREDICCIÓN
-# ============================================
-
-if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=True):
-    input_data = pd.DataFrame({
-        'Pclass': [pclass],
-        'Sex': [sex],
-        'Age': [age],
-        'SibSp': [sibsp],
-        'Parch': [parch],
-        'FamilySize': [family_size],
-        'FamilyType': [family_type],
-        'AgeGroup': [age_group]
-    })
-    input_data['Sex'] = encoders['Sex'].transform(input_data['Sex'])
-    input_data['FamilyType'] = encoders['FamilyType'].transform(input_data['FamilyType'])
-    input_data['AgeGroup'] = encoders['AgeGroup'].transform(input_data['AgeGroup'])
-    if scaler:
-        input_data = scaler.transform(input_data)
-    prediction = model.predict(input_data)[0]
-    probability = model.predict_proba(input_data)[0]
-    st.divider()
+with right_col:
     st.subheader("📊 Resultados de la Predicción")
-    if prediction == 1:
-        st.success("### ✅ EL PASAJERO SOBREVIVE")
-    else:
-        st.error("### ❌ EL PASAJERO NO SOBREVIVE")
-    col_a, col_b = st.columns(2)
-    with col_a:
-        st.metric("💀 Probabilidad de Muerte", f"{probability[0]:.1%}")
-    with col_b:
-        st.metric("💚 Probabilidad de Supervivencia", f"{probability[1]:.1%}")
-    st.markdown("#### Confianza del Modelo")
-    st.progress(probability[1], text=f"Supervivencia: {probability[1]:.1%}")
-    st.divider()
-    st.markdown("##### 💡 Interpretación")
-    if probability[1] > 0.7:
-        st.info("Alta probabilidad de supervivencia. Factores como clase alta, sexo femenino y familia pequeña favorecen la supervivencia.")
-    elif probability[1] > 0.4:
-        st.warning("Probabilidad moderada. Los factores están balanceados.")
-    else:
-        st.error("Baja probabilidad de supervivencia. Factores como clase baja, sexo masculino y familia grande reducen las posibilidades.")
+
+    if st.button("🔮 Predecir Supervivencia", type="primary", use_container_width=True):
+        input_data = pd.DataFrame({
+            'Pclass': [pclass],
+            'Sex': [sex],
+            'Age': [age],
+            'SibSp': [sibsp],
+            'Parch': [parch],
+            'FamilySize': [family_size],
+            'FamilyType': [family_type],
+            'AgeGroup': [age_group]
+        })
+        # Codificar
+        input_data['Sex'] = encoders['Sex'].transform(input_data['Sex'])
+        input_data['FamilyType'] = encoders['FamilyType'].transform(input_data['FamilyType'])
+        input_data['AgeGroup'] = encoders['AgeGroup'].transform(input_data['AgeGroup'])
+        if scaler:
+            input_data = scaler.transform(input_data)
+
+        prediction = model.predict(input_data)[0]
+        probability = model.predict_proba(input_data)[0]
+
+        if prediction == 1:
+            st.success("✅ EL PASAJERO SOBREVIVE")
+        else:
+            st.error("❌ EL PASAJERO NO SOBREVIVE")
+
+        col_a, col_b = st.columns(2)
+        with col_a:
+            st.metric("💀 Probabilidad de Muerte", f"{probability[0]:.1%}")
+        with col_b:
+            st.metric("💚 Probabilidad de Supervivencia", f"{probability[1]:.1%}")
+
+        st.markdown("#### Confianza del Modelo")
+        st.progress(probability[1], text=f"Supervivencia: {probability[1]:.1%}")
+
+        st.markdown("##### 💡 Interpretación")
+        if probability[1] > 0.7:
+            st.info("Alta probabilidad de supervivencia. Factores como clase alta, sexo femenino y familia pequeña favorecen la supervivencia.")
+        elif probability[1] > 0.4:
+            st.warning("Probabilidad moderada. Los factores están balanceados.")
+        else:
+            st.error("Baja probabilidad de supervivencia. Factores como clase baja, sexo masculino y familia grande reducen las posibilidades.")
 
 # ============================================
 # MÉTRICAS DEL MODELO (PEQUEÑAS, INFERIOR)
