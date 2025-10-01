@@ -60,7 +60,7 @@ def load_model_from_github(repo_url, max_retries=3):
             time.sleep(2)
 
 # ⚠️ CAMBIA ESTA URL POR LA DE TU REPOSITORIO
-GITHUB_REPO_URL = 'https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/'
+GITHUB_REPO_URL = 'https://github.com/andresdegante/titan'
 
 # Cargar modelo
 model, label_encoders, metadata, scaler = load_model_from_github(GITHUB_REPO_URL)
@@ -75,7 +75,7 @@ st.markdown("---")
 if model is None:
     st.error("⚠️ No se pudo cargar el modelo. Verifica la URL del repositorio.")
     st.code(f"URL actual: {GITHUB_REPO_URL}")
-    st.info("La URL debe apuntar a: https://raw.githubusercontent.com/TU-USUARIO/TU-REPO/main/")
+    st.info("https://github.com/andresdegante/titan")
     st.stop()
 
 # Mostrar información del modelo
