@@ -45,7 +45,7 @@ st.markdown(
     <div style="display: flex; flex-direction: column; align-items: center; justify-content: center;">
         <img src="https://uev.uadeo.mx/pluginfile.php/1/theme_adaptable/logo/1745964853/logoBlanco.png" width="300" style="margin-bottom: 10px;"/>
         <h1 style="font-size: 2.5em; font-weight: bold; margin-bottom: 0;">🚢 Predictor de Supervivencia Titanic</h1>
-        <br><br>
+        <br>
         <p style="font-size: 1.1em; margin-bottom: 0;">Ingresa los datos del pasajero para predecir si sobreviviría</p>
     </div>
     <hr style='margin-top: 1em; margin-bottom: 1em;'>
