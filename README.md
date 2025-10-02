@@ -8,6 +8,9 @@ Interactive web application for predicting the survival probability of Titanic p
 
 This project demonstrates how to apply machine learning to a classic dataset— the **Titanic passenger manifest**—to predict survival outcomes based on demographic and family features. The model is trained using **Logistic Regression**, **Random Forest**, and **Gradient Boosting** algorithms, then deployed as an interactive web app with Streamlit, allowing users to input passenger details and receive instant survival probabilities.
 
+https://embfkbgam49fqykscgyqxs.streamlit.app/
+
+
 ---
 
 ## Dataset
