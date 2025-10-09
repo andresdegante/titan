@@ -143,7 +143,17 @@ with right_col:
 # ============================================
 # MÉTRICAS DEL MODELO PEQUEÑAS ABAJO
 # ============================================
-
+st.divider()
+st.markdown(
+    f"""
+    <div style='text-align: center; font-size: 0.8em; color: #aaa; margin-bottom: 0.8em;'>
+        <b>Algoritmo:</b> {metadata['model_name']} &nbsp;|&nbsp;
+        <b>Precisión global:</b> {metadata['accuracy']:.1%} &nbsp;|&nbsp;
+        <b>ROC-AUC:</b> {metadata['roc_auc']:.3f}
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.divider()
 st.markdown(
     f"""
@@ -165,7 +175,7 @@ st.markdown(
     <div style='text-align: center; margin-top: 0.5em; font-size: 1em;'>
         <hr style='margin-bottom: 0.5em;'>
         <span style='font-size:1.2em; font-weight: bold;'>Universidad Autónoma de Occidente</span><br>
-        <b>Alumno:</b> Psic. Andrés Cruz Degante<br>
+        <b>Alumno:</b> Psic. Andrés Cruz Degante - andresdegante@gmail.com<br>
         <b>Profesora:</b> Dra. Alma Montserrat Romero Serrano<br>
         <b>Materia:</b> Estadística Aplicada a la Toma de Decisiones<br>
         <br>
