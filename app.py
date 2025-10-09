@@ -146,8 +146,8 @@ with right_col:
 st.divider()
 st.markdown(
     f"""
-    <div style='text-align: center; font-size: 0.8em; color: #aaa; margin-bottom: 0.8em;'>
-        <b>Algoritmo:</b> {metadata['model_name']} &nbsp;|&nbsp;
+    <div style='text-align: center; font-size: 2em; color: #aaa; margin-bottom: 2em;'>
+        <b>Análisis de supervivencia 3D interactivo:</b> <a href="https://f1a1c0f7-e22e-44d0-8e3d-26b79e1e32fe.plotly.app/" target="_blank" rel="noopener noreferrer">Abrir Análisis de Datos Interactivo</a>
         <b>Precisión global:</b> {metadata['accuracy']:.1%} &nbsp;|&nbsp;
         <b>ROC-AUC:</b> {metadata['roc_auc']:.3f}
     </div>
