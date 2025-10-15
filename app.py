@@ -143,15 +143,7 @@ with right_col:
 # ============================================
 # MÉTRICAS DEL MODELO PEQUEÑAS ABAJO
 # ============================================
-st.divider()
-st.markdown(
-    f"""
-    <div style='text-align: center; font-size: 1em; color: #aaa; margin-bottom: 1em;'>
-        <a href="https://f1a1c0f7-e22e-44d0-8e3d-26b79e1e32fe.plotly.app/" target="_blank" rel="noopener noreferrer">Análisis de Datos Interactivo</a>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
+
 st.divider()
 st.markdown(
     f"""
